@@ -52,11 +52,18 @@ jobs:
       - uses: azure/setup-helm@v4
       - run: helm lint ${{ env.CHART_DIR }}
 
-  publish:
-    name: Publish dev build
+  build-image:
+    name: Build image (${{ matrix.arch }})
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: [lint, test, helm-lint]
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-latest
+          - arch: arm64
+            runner: ubuntu-24.04-arm
     steps:
       - uses: actions/checkout@v4
 
@@ -66,11 +73,6 @@ jobs:
           SHA="${GITHUB_SHA::7}"
           echo "sha=$SHA" >> "$GITHUB_OUTPUT"
           echo "version=0.0.0-$SHA" >> "$GITHUB_OUTPUT"
-
-      - name: Set Helm chart version
-        run: |
-          sed -i "s/^version:.*/version: ${{ steps.version.outputs.version }}/" ${{ env.CHART_DIR }}/Chart.yaml
-          sed -i "s/^appVersion:.*/appVersion: \"${{ steps.version.outputs.version }}\"/" ${{ env.CHART_DIR }}/Chart.yaml
 
       - name: Log in to GHCR
         uses: docker/login-action@v3
@@ -82,17 +84,58 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build and push container image
+      - name: Build and push per-arch image
         uses: docker/build-push-action@v6
         with:
           context: .
           push: true
-          platforms: linux/amd64,linux/arm64
           tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.sha }}
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:main
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.sha }}-${{ matrix.arch }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:main-${{ matrix.arch }}
+          provenance: false
+          cache-from: type=gha,scope=${{ matrix.arch }}
+          cache-to: type=gha,scope=${{ matrix.arch }},mode=max
+
+  publish:
+    name: Publish dev manifest & Helm chart
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [build-image]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Derive version from commit
+        id: version
+        run: |
+          SHA="${GITHUB_SHA::7}"
+          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
+          echo "version=0.0.0-$SHA" >> "$GITHUB_OUTPUT"
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create and push multi-arch manifests
+        run: |
+          docker manifest create \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.sha }} \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.sha }}-amd64 \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.sha }}-arm64
+          docker manifest push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.sha }}
+
+          docker manifest create \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:main \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:main-amd64 \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:main-arm64
+          docker manifest push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:main
+
+      - name: Set Helm chart version
+        run: |
+          sed -i "s/^version:.*/version: ${{ steps.version.outputs.version }}/" ${{ env.CHART_DIR }}/Chart.yaml
+          sed -i "s/^appVersion:.*/appVersion: \"${{ steps.version.outputs.version }}\"/" ${{ env.CHART_DIR }}/Chart.yaml
 
       - name: Set up Helm
         uses: azure/setup-helm@v4

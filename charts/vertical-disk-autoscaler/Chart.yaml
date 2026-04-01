@@ -11,4 +11,4 @@ keywords:
   - iops
   - kubernetes
 sources:
-  - https://github.com/padoa/vertical-disk-autoscaler
+  - https://github.com/LucasMrqes/vertical-disk-autoscaler

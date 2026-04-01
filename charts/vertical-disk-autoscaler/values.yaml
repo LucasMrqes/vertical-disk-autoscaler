@@ -1,7 +1,7 @@
 replicaCount: 1
 
 image:
-  repository: vertical-disk-autoscaler
+  repository: ghcr.io/lucasmrqes/vertical-disk-autoscaler
   tag: ""  # Defaults to appVersion
   pullPolicy: IfNotPresent
 

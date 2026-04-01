@@ -24,13 +24,10 @@ Restoring PostgreSQL databases from pgBackRest backups on AKS. Create the PVC wi
 ### Install
 
 ```bash
-make docker-build IMG=myregistry/vertical-disk-autoscaler:v0.1.0
-make docker-push IMG=myregistry/vertical-disk-autoscaler:v0.1.0
-
-helm upgrade --install disk-autoscaler charts/vertical-disk-autoscaler/ \
+helm install disk-autoscaler \
+  oci://ghcr.io/lucasmrqes/vertical-disk-autoscaler/charts/vertical-disk-autoscaler \
+  --version 0.1.0 \
   --namespace disk-autoscaler-system --create-namespace \
-  --set image.repository=myregistry/vertical-disk-autoscaler \
-  --set image.tag=v0.1.0 \
   --set serviceAccount.annotations."azure\.workload\.identity/client-id"="<your-client-id>"
 ```
 

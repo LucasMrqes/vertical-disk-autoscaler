@@ -71,7 +71,7 @@ On each reconcile:
 
 ### Registry
 
-Thread-safe in-memory store (`sync.RWMutex` + map) of managed disks. Tracks:
+Thread-safe in-memory store of managed disks. Tracks:
 - PVC/PV/disk ID mapping
 - Policy reference
 - Current provisioned IOPS/throughput

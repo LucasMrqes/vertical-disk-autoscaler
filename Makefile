@@ -1,4 +1,3 @@
-IMG ?= vertical-disk-autoscaler:latest
 CHART_DIR ?= charts/vertical-disk-autoscaler
 NAMESPACE ?= disk-autoscaler-system
 RELEASE ?= disk-autoscaler
@@ -6,7 +5,7 @@ RELEASE ?= disk-autoscaler
 CONTROLLER_GEN ?= $(shell which controller-gen 2>/dev/null || echo $(GOBIN)/controller-gen)
 GOBIN ?= $(shell go env GOPATH)/bin
 
-.PHONY: build test fmt vet docker-build docker-push install uninstall helm-lint generate manifests controller-gen
+.PHONY: build test fmt vet generate manifests controller-gen helm-lint install uninstall
 
 build:
 	CGO_ENABLED=0 go build -o bin/manager ./cmd/main.go
@@ -19,12 +18,6 @@ fmt:
 
 vet:
 	CGO_ENABLED=0 go vet ./...
-
-docker-build:
-	docker build -t $(IMG) .
-
-docker-push:
-	docker push $(IMG)
 
 generate: controller-gen
 	$(CONTROLLER_GEN) object paths="./api/..."
@@ -40,8 +33,7 @@ helm-lint:
 
 install:
 	helm upgrade --install $(RELEASE) $(CHART_DIR) \
-		--namespace $(NAMESPACE) --create-namespace \
-		--set image.repository=$(IMG)
+		--namespace $(NAMESPACE) --create-namespace
 
 uninstall:
 	helm uninstall $(RELEASE) --namespace $(NAMESPACE)

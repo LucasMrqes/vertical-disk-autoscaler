@@ -74,14 +74,6 @@ spec:
     maxScalesPerHour: 6
 ```
 
-### Check status
-
-```bash
-kubectl get diskautoscalepolicies -o yaml
-```
-
-The `status.disks` array shows per-disk state: current IOPS/throughput, utilization, phase, and last scale timestamps.
-
 ## Configuration
 
 ### Controller flags
@@ -107,14 +99,13 @@ The controller uses `DefaultAzureCredential`, which tries (in order):
 | Provider | Disk type | Status |
 |----------|-----------|--------|
 | Azure | Premium SSD v2 | Supported |
-| GCP | Hyperdisk Balanced/Extreme | Planned |
+| GCP | Hyperdisk Balanced/Extreme | Not implemented |
 | AWS | gp3/io2 | Not viable (6h modification cooldown) |
 
 The CRD is cloud-agnostic. The controller infers the provider from the PV's CSI driver (`disk.csi.azure.com`, `pd.csi.storage.gke.io`).
 
-## Future work
+## Planned work
 
-- GCP Hyperdisk provider
 - Prometheus metrics source (for sub-minute reaction times)
 - Kubernetes events on scale actions
 - Webhook validation for DiskAutoscalePolicy

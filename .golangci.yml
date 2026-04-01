@@ -1,3 +1,5 @@
+version: "2"
+
 run:
   timeout: 5m
 
@@ -8,22 +10,26 @@ linters:
     - ineffassign
     - staticcheck
     - unused
-    - gosimple
     - gocritic
-    - gofmt
     - misspell
     - unconvert
     - unparam
     - bodyclose
 
-linters-settings:
-  gocritic:
-    enabled-tags:
-      - diagnostic
-      - performance
-    disabled-checks:
-      - hugeParam
+  settings:
+    gocritic:
+      enabled-tags:
+        - diagnostic
+        - performance
+      disabled-checks:
+        - hugeParam
 
-issues:
-  exclude-dirs:
-    - api/v1alpha1/zz_generated.*
+  exclusions:
+    generated: strict
+
+formatters:
+  enable:
+    - gofmt
+
+  exclusions:
+    generated: strict

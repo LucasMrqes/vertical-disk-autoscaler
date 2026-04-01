@@ -27,7 +27,7 @@ const (
 
 // DiskPerformance holds the provisioned performance of a disk.
 type DiskPerformance struct {
-	IOPS          int64
+	IOPS           int64
 	ThroughputMBps int64
 }
 
@@ -40,11 +40,11 @@ type DiskMetrics struct {
 
 // Provider implements disk operations for Azure Premium SSD v2.
 type Provider struct {
-	log         logr.Logger
-	limiter     *rate.Limiter
-	diskClients map[string]*armcompute.DisksClient       // keyed by subscription ID
-	metricClients map[string]*armmonitor.MetricsClient   // keyed by subscription ID
-	cred        azcore.TokenCredential
+	log           logr.Logger
+	limiter       *rate.Limiter
+	diskClients   map[string]*armcompute.DisksClient   // keyed by subscription ID
+	metricClients map[string]*armmonitor.MetricsClient // keyed by subscription ID
+	cred          azcore.TokenCredential
 }
 
 // NewProvider creates a new Azure provider with the given credential and global rate limiter.

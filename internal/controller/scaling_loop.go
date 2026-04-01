@@ -61,13 +61,13 @@ func (s *ScalingLoop) tick(ctx context.Context) {
 
 	s.log.V(1).Info("scaling tick", "managedDisks", len(disks))
 
-	for _, disk := range disks {
-		if err := s.evaluateDisk(ctx, disk); err != nil {
+	for i := range disks {
+		if err := s.evaluateDisk(ctx, disks[i]); err != nil {
 			s.log.Error(err, "failed to evaluate disk",
-				"pvc", disk.PVCNamespace+"/"+disk.PVCName,
-				"diskID", disk.DiskID,
+				"pvc", disks[i].PVCNamespace+"/"+disks[i].PVCName,
+				"diskID", disks[i].DiskID,
 			)
-			s.registry.SetError(disk.PVCNamespace, disk.PVCName, err.Error())
+			s.registry.SetError(disks[i].PVCNamespace, disks[i].PVCName, err.Error())
 		}
 	}
 }

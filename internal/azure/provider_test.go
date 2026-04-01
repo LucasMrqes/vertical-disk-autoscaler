@@ -9,12 +9,12 @@ import (
 
 func TestParseDiskResourceID(t *testing.T) {
 	tests := []struct {
-		name        string
-		resourceID  string
-		wantSub     string
-		wantRG      string
-		wantDisk    string
-		wantErr     bool
+		name       string
+		resourceID string
+		wantSub    string
+		wantRG     string
+		wantDisk   string
+		wantErr    bool
 	}{
 		{
 			name:       "valid resource ID",

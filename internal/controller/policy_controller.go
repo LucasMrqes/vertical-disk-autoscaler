@@ -44,9 +44,10 @@ func (r *PolicyController) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	if err := r.client.Get(ctx, req.NamespacedName, &policy); err != nil {
 		if client.IgnoreNotFound(err) == nil {
 			// Policy deleted — unregister all disks for this policy.
-			for _, disk := range r.registry.ListByPolicy(req.Namespace, req.Name) {
-				r.registry.Unregister(disk.PVCNamespace, disk.PVCName)
-				log.Info("unregistered disk after policy deletion", "pvc", disk.PVCNamespace+"/"+disk.PVCName)
+			disks := r.registry.ListByPolicy(req.Namespace, req.Name)
+			for i := range disks {
+				r.registry.Unregister(disks[i].PVCNamespace, disks[i].PVCName)
+				log.Info("unregistered disk after policy deletion", "pvc", disks[i].PVCNamespace+"/"+disks[i].PVCName)
 			}
 			return ctrl.Result{}, nil
 		}
@@ -63,7 +64,8 @@ func (r *PolicyController) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	// Track which PVCs are still matched so we can unregister stale ones.
 	currentKeys := make(map[string]bool)
 
-	for _, pvc := range matchingPVCs {
+	for i := range matchingPVCs {
+		pvc := &matchingPVCs[i]
 		pvcKey := pvc.Namespace + "/" + pvc.Name
 		currentKeys[pvcKey] = true
 
@@ -107,10 +109,11 @@ func (r *PolicyController) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	}
 
 	// Unregister disks that no longer match this policy.
-	for _, disk := range r.registry.ListByPolicy(policy.Namespace, policy.Name) {
-		key := disk.PVCNamespace + "/" + disk.PVCName
+	staleDisks := r.registry.ListByPolicy(policy.Namespace, policy.Name)
+	for i := range staleDisks {
+		key := staleDisks[i].PVCNamespace + "/" + staleDisks[i].PVCName
 		if !currentKeys[key] {
-			r.registry.Unregister(disk.PVCNamespace, disk.PVCName)
+			r.registry.Unregister(staleDisks[i].PVCNamespace, staleDisks[i].PVCName)
 			log.Info("unregistered disk (no longer matches policy)", "pvc", key)
 		}
 	}
@@ -136,7 +139,8 @@ func (r *PolicyController) findMatchingPVCs(ctx context.Context, policy *v1alpha
 		}
 	}
 
-	for _, pvc := range allPVCs.Items {
+	for i := range allPVCs.Items {
+		pvc := &allPVCs.Items[i]
 		matches := false
 
 		// Check label selector match.
@@ -152,7 +156,7 @@ func (r *PolicyController) findMatchingPVCs(ctx context.Context, policy *v1alpha
 		}
 
 		if matches {
-			matched = append(matched, pvc)
+			matched = append(matched, *pvc)
 		}
 	}
 
@@ -178,12 +182,12 @@ func (r *PolicyController) mapPVCToPolicy(ctx context.Context, obj client.Object
 		return nil
 	}
 
-	var requests []reconcile.Request
-	for _, policy := range policies.Items {
+	requests := make([]reconcile.Request, 0, len(policies.Items))
+	for i := range policies.Items {
 		requests = append(requests, reconcile.Request{
 			NamespacedName: types.NamespacedName{
-				Name:      policy.Name,
-				Namespace: policy.Namespace,
+				Name:      policies.Items[i].Name,
+				Namespace: policies.Items[i].Namespace,
 			},
 		})
 	}

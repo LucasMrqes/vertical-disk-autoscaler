@@ -100,15 +100,15 @@ func TestReRegisterPreservesState(t *testing.T) {
 	lastScale := time.Now().Add(-5 * time.Minute)
 
 	r.Register(&ManagedDisk{
-		PVCName:           "data",
-		PVCNamespace:      "default",
-		DiskID:            "disk1",
-		FirstSeen:         firstSeen,
-		CurrentIOPS:       20000,
+		PVCName:               "data",
+		PVCNamespace:          "default",
+		DiskID:                "disk1",
+		FirstSeen:             firstSeen,
+		CurrentIOPS:           20000,
 		CurrentThroughputMBps: 400,
-		LastScaleUp:       &lastScale,
-		ScaleHistory:      []time.Time{lastScale},
-		Phase:             v1alpha1.DiskPhaseCooldownUp,
+		LastScaleUp:           &lastScale,
+		ScaleHistory:          []time.Time{lastScale},
+		Phase:                 v1alpha1.DiskPhaseCooldownUp,
 	})
 
 	// Re-register with updated config but same PVC.
@@ -183,7 +183,7 @@ func TestUpdateAfterScale_PrunesOldHistory(t *testing.T) {
 		PVCName:      "data",
 		PVCNamespace: "default",
 		ScaleHistory: []time.Time{
-			time.Now().Add(-2 * time.Hour), // Old, should be pruned.
+			time.Now().Add(-2 * time.Hour),    // Old, should be pruned.
 			time.Now().Add(-30 * time.Minute), // Recent, should stay.
 		},
 	})

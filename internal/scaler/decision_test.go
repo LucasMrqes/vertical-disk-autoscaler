@@ -11,20 +11,20 @@ import (
 func defaultSpec() v1alpha1.DiskAutoscalePolicySpec {
 	return v1alpha1.DiskAutoscalePolicySpec{
 		ScaleUp: v1alpha1.ScaleDirectionConfig{
-			Enabled:                           true,
-			TargetIOPSUtilizationPercent:      80,
+			Enabled:                            true,
+			TargetIOPSUtilizationPercent:       80,
 			TargetThroughputUtilizationPercent: 80,
-			StepIOPS:                          5000,
-			StepThroughputMBps:                100,
-			Cooldown:                          metav1.Duration{Duration: 2 * time.Minute},
+			StepIOPS:                           5000,
+			StepThroughputMBps:                 100,
+			Cooldown:                           metav1.Duration{Duration: 2 * time.Minute},
 		},
 		ScaleDown: v1alpha1.ScaleDirectionConfig{
-			Enabled:                           true,
-			TargetIOPSUtilizationPercent:      30,
+			Enabled:                            true,
+			TargetIOPSUtilizationPercent:       30,
 			TargetThroughputUtilizationPercent: 30,
-			StepIOPS:                          2000,
-			StepThroughputMBps:                50,
-			Cooldown:                          metav1.Duration{Duration: 10 * time.Minute},
+			StepIOPS:                           2000,
+			StepThroughputMBps:                 50,
+			Cooldown:                           metav1.Duration{Duration: 10 * time.Minute},
 		},
 		Constraints: v1alpha1.ScalingConstraints{
 			MinIOPS:           3000,
@@ -42,11 +42,11 @@ func defaultSpec() v1alpha1.DiskAutoscalePolicySpec {
 func TestEvaluate_InitializationPeriod(t *testing.T) {
 	now := time.Now()
 	state := DiskState{
-		CurrentIOPS:              3000,
-		CurrentThroughputMBps:    125,
-		IOPSUtilizationPercent:   95,
+		CurrentIOPS:                  3000,
+		CurrentThroughputMBps:        125,
+		IOPSUtilizationPercent:       95,
 		ThroughputUtilizationPercent: 95,
-		FirstSeen:               now.Add(-2 * time.Minute), // Only 2 min ago.
+		FirstSeen:                    now.Add(-2 * time.Minute), // Only 2 min ago.
 	}
 
 	action := Evaluate(state, defaultSpec(), now)
@@ -58,11 +58,11 @@ func TestEvaluate_InitializationPeriod(t *testing.T) {
 func TestEvaluate_ScaleUp_HighIOPS(t *testing.T) {
 	now := time.Now()
 	state := DiskState{
-		CurrentIOPS:              10000,
-		CurrentThroughputMBps:    200,
-		IOPSUtilizationPercent:   90,
+		CurrentIOPS:                  10000,
+		CurrentThroughputMBps:        200,
+		IOPSUtilizationPercent:       90,
 		ThroughputUtilizationPercent: 50,
-		FirstSeen:               now.Add(-10 * time.Minute),
+		FirstSeen:                    now.Add(-10 * time.Minute),
 	}
 
 	action := Evaluate(state, defaultSpec(), now)
@@ -84,11 +84,11 @@ func TestEvaluate_ScaleUp_HighIOPS(t *testing.T) {
 func TestEvaluate_ScaleUp_HighThroughput(t *testing.T) {
 	now := time.Now()
 	state := DiskState{
-		CurrentIOPS:              20000,
-		CurrentThroughputMBps:    300,
-		IOPSUtilizationPercent:   50,
+		CurrentIOPS:                  20000,
+		CurrentThroughputMBps:        300,
+		IOPSUtilizationPercent:       50,
 		ThroughputUtilizationPercent: 90,
-		FirstSeen:               now.Add(-10 * time.Minute),
+		FirstSeen:                    now.Add(-10 * time.Minute),
 	}
 
 	action := Evaluate(state, defaultSpec(), now)
@@ -107,11 +107,11 @@ func TestEvaluate_ScaleUp_HighThroughput(t *testing.T) {
 func TestEvaluate_ScaleDown_BothLow(t *testing.T) {
 	now := time.Now()
 	state := DiskState{
-		CurrentIOPS:              20000,
-		CurrentThroughputMBps:    400,
-		IOPSUtilizationPercent:   10,
+		CurrentIOPS:                  20000,
+		CurrentThroughputMBps:        400,
+		IOPSUtilizationPercent:       10,
 		ThroughputUtilizationPercent: 15,
-		FirstSeen:               now.Add(-30 * time.Minute),
+		FirstSeen:                    now.Add(-30 * time.Minute),
 	}
 
 	action := Evaluate(state, defaultSpec(), now)
@@ -132,11 +132,11 @@ func TestEvaluate_ScaleDown_BothLow(t *testing.T) {
 func TestEvaluate_ScaleDown_OnlyOneLow(t *testing.T) {
 	now := time.Now()
 	state := DiskState{
-		CurrentIOPS:              20000,
-		CurrentThroughputMBps:    400,
-		IOPSUtilizationPercent:   10,        // Below target.
-		ThroughputUtilizationPercent: 50,    // Above target.
-		FirstSeen:               now.Add(-30 * time.Minute),
+		CurrentIOPS:                  20000,
+		CurrentThroughputMBps:        400,
+		IOPSUtilizationPercent:       10, // Below target.
+		ThroughputUtilizationPercent: 50, // Above target.
+		FirstSeen:                    now.Add(-30 * time.Minute),
 	}
 
 	action := Evaluate(state, defaultSpec(), now)
@@ -149,12 +149,12 @@ func TestEvaluate_Cooldown_ScaleUp(t *testing.T) {
 	now := time.Now()
 	lastScale := now.Add(-1 * time.Minute) // 1 min ago, cooldown is 2 min.
 	state := DiskState{
-		CurrentIOPS:              10000,
-		CurrentThroughputMBps:    200,
-		IOPSUtilizationPercent:   95,
+		CurrentIOPS:                  10000,
+		CurrentThroughputMBps:        200,
+		IOPSUtilizationPercent:       95,
 		ThroughputUtilizationPercent: 95,
-		FirstSeen:               now.Add(-30 * time.Minute),
-		LastScaleUp:             &lastScale,
+		FirstSeen:                    now.Add(-30 * time.Minute),
+		LastScaleUp:                  &lastScale,
 	}
 
 	action := Evaluate(state, defaultSpec(), now)
@@ -166,11 +166,11 @@ func TestEvaluate_Cooldown_ScaleUp(t *testing.T) {
 func TestEvaluate_ClampToMax(t *testing.T) {
 	now := time.Now()
 	state := DiskState{
-		CurrentIOPS:              38000,
-		CurrentThroughputMBps:    550,
-		IOPSUtilizationPercent:   95,
+		CurrentIOPS:                  38000,
+		CurrentThroughputMBps:        550,
+		IOPSUtilizationPercent:       95,
 		ThroughputUtilizationPercent: 95,
-		FirstSeen:               now.Add(-30 * time.Minute),
+		FirstSeen:                    now.Add(-30 * time.Minute),
 	}
 
 	action := Evaluate(state, defaultSpec(), now)
@@ -188,11 +188,11 @@ func TestEvaluate_ClampToMax(t *testing.T) {
 func TestEvaluate_ClampToMin(t *testing.T) {
 	now := time.Now()
 	state := DiskState{
-		CurrentIOPS:              4000,
-		CurrentThroughputMBps:    150,
-		IOPSUtilizationPercent:   5,
+		CurrentIOPS:                  4000,
+		CurrentThroughputMBps:        150,
+		IOPSUtilizationPercent:       5,
 		ThroughputUtilizationPercent: 5,
-		FirstSeen:               now.Add(-30 * time.Minute),
+		FirstSeen:                    now.Add(-30 * time.Minute),
 	}
 
 	action := Evaluate(state, defaultSpec(), now)
@@ -210,11 +210,11 @@ func TestEvaluate_ClampToMin(t *testing.T) {
 func TestEvaluate_AlreadyAtMax(t *testing.T) {
 	now := time.Now()
 	state := DiskState{
-		CurrentIOPS:              40000,
-		CurrentThroughputMBps:    600,
-		IOPSUtilizationPercent:   95,
+		CurrentIOPS:                  40000,
+		CurrentThroughputMBps:        600,
+		IOPSUtilizationPercent:       95,
 		ThroughputUtilizationPercent: 95,
-		FirstSeen:               now.Add(-30 * time.Minute),
+		FirstSeen:                    now.Add(-30 * time.Minute),
 	}
 
 	action := Evaluate(state, defaultSpec(), now)
@@ -226,11 +226,11 @@ func TestEvaluate_AlreadyAtMax(t *testing.T) {
 func TestEvaluate_AlreadyAtMin(t *testing.T) {
 	now := time.Now()
 	state := DiskState{
-		CurrentIOPS:              3000,
-		CurrentThroughputMBps:    125,
-		IOPSUtilizationPercent:   5,
+		CurrentIOPS:                  3000,
+		CurrentThroughputMBps:        125,
+		IOPSUtilizationPercent:       5,
 		ThroughputUtilizationPercent: 5,
-		FirstSeen:               now.Add(-30 * time.Minute),
+		FirstSeen:                    now.Add(-30 * time.Minute),
 	}
 
 	action := Evaluate(state, defaultSpec(), now)
@@ -245,12 +245,12 @@ func TestEvaluate_RateLimitExceeded(t *testing.T) {
 	spec.RateLimit = &v1alpha1.RateLimitConfig{MaxScalesPerHour: 2}
 
 	state := DiskState{
-		CurrentIOPS:              10000,
-		CurrentThroughputMBps:    200,
-		IOPSUtilizationPercent:   95,
+		CurrentIOPS:                  10000,
+		CurrentThroughputMBps:        200,
+		IOPSUtilizationPercent:       95,
 		ThroughputUtilizationPercent: 95,
-		FirstSeen:               now.Add(-30 * time.Minute),
-		ScalesInLastHour:         2,
+		FirstSeen:                    now.Add(-30 * time.Minute),
+		ScalesInLastHour:             2,
 	}
 
 	action := Evaluate(state, spec, now)

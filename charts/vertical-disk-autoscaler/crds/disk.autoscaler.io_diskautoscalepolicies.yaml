@@ -1,0 +1,389 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.20.1
+  name: diskautoscalepolicies.disk.autoscaler.io
+spec:
+  group: disk.autoscaler.io
+  names:
+    kind: DiskAutoscalePolicy
+    listKind: DiskAutoscalePolicyList
+    plural: diskautoscalepolicies
+    singular: diskautoscalepolicy
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: DiskAutoscalePolicy defines an autoscaling policy for Azure Premium
+          SSD v2 disks.
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            properties:
+              behavior:
+                description: Behavior defines timing-related settings.
+                properties:
+                  initializationPeriod:
+                    default: 5m
+                    description: InitializationPeriod is the duration after a PVC
+                      is first seen during which no scaling occurs.
+                    type: string
+                  metricsWindow:
+                    default: 5m
+                    description: MetricsWindow is the duration over which metrics
+                      are averaged for scaling decisions.
+                    type: string
+                type: object
+              constraints:
+                description: Constraints defines the min/max bounds for IOPS and throughput.
+                properties:
+                  maxIOPS:
+                    description: MaxIOPS is the maximum IOPS the autoscaler will set.
+                    format: int64
+                    minimum: 3000
+                    type: integer
+                  maxThroughputMBps:
+                    description: MaxThroughputMBps is the maximum throughput in MB/s.
+                    format: int64
+                    minimum: 125
+                    type: integer
+                  minIOPS:
+                    default: 3000
+                    description: MinIOPS is the minimum IOPS the autoscaler will set.
+                    format: int64
+                    minimum: 3000
+                    type: integer
+                  minThroughputMBps:
+                    default: 125
+                    description: MinThroughputMBps is the minimum throughput in MB/s.
+                    format: int64
+                    minimum: 125
+                    type: integer
+                required:
+                - maxIOPS
+                - maxThroughputMBps
+                - minIOPS
+                - minThroughputMBps
+                type: object
+              pvcSelector:
+                description: PVCSelector selects PVCs by label. If set, all matching
+                  PVCs are managed.
+                properties:
+                  matchExpressions:
+                    description: matchExpressions is a list of label selector requirements.
+                      The requirements are ANDed.
+                    items:
+                      description: |-
+                        A label selector requirement is a selector that contains values, a key, and an operator that
+                        relates the key and values.
+                      properties:
+                        key:
+                          description: key is the label key that the selector applies
+                            to.
+                          type: string
+                        operator:
+                          description: |-
+                            operator represents a key's relationship to a set of values.
+                            Valid operators are In, NotIn, Exists and DoesNotExist.
+                          type: string
+                        values:
+                          description: |-
+                            values is an array of string values. If the operator is In or NotIn,
+                            the values array must be non-empty. If the operator is Exists or DoesNotExist,
+                            the values array must be empty. This array is replaced during a strategic
+                            merge patch.
+                          items:
+                            type: string
+                          type: array
+                          x-kubernetes-list-type: atomic
+                      required:
+                      - key
+                      - operator
+                      type: object
+                    type: array
+                    x-kubernetes-list-type: atomic
+                  matchLabels:
+                    additionalProperties:
+                      type: string
+                    description: |-
+                      matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+                      map is equivalent to an element of matchExpressions, whose key field is "key", the
+                      operator is "In", and the values array contains only "value". The requirements are ANDed.
+                    type: object
+                type: object
+                x-kubernetes-map-type: atomic
+              rateLimit:
+                description: RateLimit defines per-disk scaling rate limits.
+                properties:
+                  maxScalesPerHour:
+                    default: 6
+                    description: MaxScalesPerHour is the maximum number of scaling
+                      actions per disk per hour.
+                    format: int32
+                    minimum: 1
+                    type: integer
+                type: object
+              scaleDown:
+                description: ScaleDown configures downscaling behavior.
+                properties:
+                  cooldown:
+                    default: 5m
+                    description: Cooldown is the minimum duration between two scaling
+                      actions in this direction.
+                    type: string
+                  enabled:
+                    default: true
+                    description: Enabled controls whether scaling in this direction
+                      is active.
+                    type: boolean
+                  stepIOPS:
+                    description: StepIOPS is the number of IOPS to add/remove per
+                      scaling action.
+                    format: int64
+                    minimum: 1
+                    type: integer
+                  stepThroughputMBps:
+                    description: StepThroughputMBps is the throughput in MB/s to add/remove
+                      per scaling action.
+                    format: int64
+                    minimum: 1
+                    type: integer
+                  targetIOPSUtilizationPercent:
+                    description: TargetIOPSUtilizationPercent is the target IOPS utilization
+                      that triggers scaling.
+                    format: int32
+                    maximum: 100
+                    minimum: 1
+                    type: integer
+                  targetThroughputUtilizationPercent:
+                    description: TargetThroughputUtilizationPercent is the target
+                      throughput utilization that triggers scaling.
+                    format: int32
+                    maximum: 100
+                    minimum: 1
+                    type: integer
+                required:
+                - cooldown
+                - enabled
+                - stepIOPS
+                - stepThroughputMBps
+                - targetIOPSUtilizationPercent
+                - targetThroughputUtilizationPercent
+                type: object
+              scaleUp:
+                description: ScaleUp configures upscaling behavior.
+                properties:
+                  cooldown:
+                    default: 5m
+                    description: Cooldown is the minimum duration between two scaling
+                      actions in this direction.
+                    type: string
+                  enabled:
+                    default: true
+                    description: Enabled controls whether scaling in this direction
+                      is active.
+                    type: boolean
+                  stepIOPS:
+                    description: StepIOPS is the number of IOPS to add/remove per
+                      scaling action.
+                    format: int64
+                    minimum: 1
+                    type: integer
+                  stepThroughputMBps:
+                    description: StepThroughputMBps is the throughput in MB/s to add/remove
+                      per scaling action.
+                    format: int64
+                    minimum: 1
+                    type: integer
+                  targetIOPSUtilizationPercent:
+                    description: TargetIOPSUtilizationPercent is the target IOPS utilization
+                      that triggers scaling.
+                    format: int32
+                    maximum: 100
+                    minimum: 1
+                    type: integer
+                  targetThroughputUtilizationPercent:
+                    description: TargetThroughputUtilizationPercent is the target
+                      throughput utilization that triggers scaling.
+                    format: int32
+                    maximum: 100
+                    minimum: 1
+                    type: integer
+                required:
+                - cooldown
+                - enabled
+                - stepIOPS
+                - stepThroughputMBps
+                - targetIOPSUtilizationPercent
+                - targetThroughputUtilizationPercent
+                type: object
+              storageClassName:
+                description: StorageClassName selects all PVCs using this StorageClass.
+                type: string
+            required:
+            - constraints
+            - scaleDown
+            - scaleUp
+            type: object
+          status:
+            description: DiskAutoscalePolicyStatus defines the observed state.
+            properties:
+              conditions:
+                description: Conditions represent the latest available observations.
+                items:
+                  description: Condition contains details for one aspect of the current
+                    state of this API Resource.
+                  properties:
+                    lastTransitionTime:
+                      description: |-
+                        lastTransitionTime is the last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: |-
+                        message is a human readable message indicating details about the transition.
+                        This may be an empty string.
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      description: |-
+                        observedGeneration represents the .metadata.generation that the condition was set based upon.
+                        For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+                        with respect to the current state of the instance.
+                      format: int64
+                      minimum: 0
+                      type: integer
+                    reason:
+                      description: |-
+                        reason contains a programmatic identifier indicating the reason for the condition's last transition.
+                        Producers of specific condition types may define expected values and meanings for this field,
+                        and whether the values are considered a guaranteed API.
+                        The value should be a CamelCase string.
+                        This field may not be empty.
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+              disks:
+                description: Disks contains the status of each managed disk.
+                items:
+                  properties:
+                    azureDiskResourceID:
+                      description: AzureDiskResourceID is the full Azure resource
+                        ID of the managed disk.
+                      type: string
+                    currentIOPS:
+                      description: CurrentIOPS is the currently provisioned IOPS.
+                      format: int64
+                      type: integer
+                    currentThroughputMBps:
+                      description: CurrentThroughputMBps is the currently provisioned
+                        throughput in MB/s.
+                      format: int64
+                      type: integer
+                    lastError:
+                      description: LastError contains the last error message if phase
+                        is Error.
+                      type: string
+                    lastMetrics:
+                      description: LastMetrics contains the most recently observed
+                        utilization.
+                      properties:
+                        iopsUtilizationPercent:
+                          description: IOPSUtilizationPercent is the observed IOPS
+                            utilization (0-100).
+                          format: int32
+                          type: integer
+                        throughputUtilizationPercent:
+                          description: ThroughputUtilizationPercent is the observed
+                            throughput utilization (0-100).
+                          format: int32
+                          type: integer
+                        timestamp:
+                          description: Timestamp is when these metrics were observed.
+                          format: date-time
+                          type: string
+                      required:
+                      - iopsUtilizationPercent
+                      - throughputUtilizationPercent
+                      - timestamp
+                      type: object
+                    lastScaleDown:
+                      description: LastScaleDown is the timestamp of the last scale-down
+                        action.
+                      format: date-time
+                      type: string
+                    lastScaleUp:
+                      description: LastScaleUp is the timestamp of the last scale-up
+                        action.
+                      format: date-time
+                      type: string
+                    phase:
+                      description: Phase indicates the current state of this disk's
+                        autoscaling.
+                      type: string
+                    pvcName:
+                      description: PVCName is the name of the PVC.
+                      type: string
+                    pvcNamespace:
+                      description: PVCNamespace is the namespace of the PVC.
+                      type: string
+                  required:
+                  - azureDiskResourceID
+                  - currentIOPS
+                  - currentThroughputMBps
+                  - phase
+                  - pvcName
+                  - pvcNamespace
+                  type: object
+                type: array
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

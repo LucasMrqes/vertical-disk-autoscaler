@@ -1,0 +1,52 @@
+replicaCount: 1
+
+image:
+  repository: vertical-disk-autoscaler
+  tag: ""  # Defaults to appVersion
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  annotations: {}
+    # azure.workload.identity/client-id: "<managed-identity-client-id>"
+
+controller:
+  scalingInterval: 30s
+  maxAzureWritesPerHour: 600
+  debug: false
+
+podAnnotations: {}
+
+podLabels:
+  azure.workload.identity/use: "true"
+
+resources:
+  limits:
+    cpu: 200m
+    memory: 128Mi
+  requests:
+    cpu: 100m
+    memory: 64Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+podSecurityContext:
+  runAsNonRoot: true
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  capabilities:
+    drop:
+      - ALL

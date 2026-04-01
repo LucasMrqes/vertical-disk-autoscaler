@@ -1,0 +1,36 @@
+apiVersion: disk.autoscaler.io/v1alpha1
+kind: DiskAutoscalePolicy
+metadata:
+  name: default-policy
+spec:
+  # Match all PVCs using this StorageClass
+  storageClassName: managed-premium-v2
+
+  scaleUp:
+    enabled: true
+    targetIOPSUtilizationPercent: 80
+    targetThroughputUtilizationPercent: 80
+    stepIOPS: 5000
+    stepThroughputMBps: 100
+    cooldown: 2m
+
+  scaleDown:
+    enabled: true
+    targetIOPSUtilizationPercent: 30
+    targetThroughputUtilizationPercent: 30
+    stepIOPS: 2000
+    stepThroughputMBps: 50
+    cooldown: 10m
+
+  constraints:
+    minIOPS: 3000
+    maxIOPS: 40000
+    minThroughputMBps: 125
+    maxThroughputMBps: 600
+
+  behavior:
+    initializationPeriod: 5m
+    metricsWindow: 5m
+
+  rateLimit:
+    maxScalesPerHour: 6

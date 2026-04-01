@@ -1,0 +1,40 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "vertical-disk-autoscaler.fullname" . }}
+  labels:
+    {{- include "vertical-disk-autoscaler.labels" . | nindent 4 }}
+rules:
+  - apiGroups: ["disk.autoscaler.io"]
+    resources: ["diskautoscalepolicies"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["disk.autoscaler.io"]
+    resources: ["diskautoscalepolicies/status"]
+    verbs: ["get", "update", "patch"]
+  - apiGroups: [""]
+    resources: ["persistentvolumeclaims"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["persistentvolumes"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["storageclasses"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["create", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "vertical-disk-autoscaler.fullname" . }}
+  labels:
+    {{- include "vertical-disk-autoscaler.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ include "vertical-disk-autoscaler.fullname" . }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "vertical-disk-autoscaler.serviceAccountName" . }}
+    namespace: {{ .Release.Namespace }}

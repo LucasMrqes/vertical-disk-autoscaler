@@ -1,0 +1,14 @@
+apiVersion: v2
+name: vertical-disk-autoscaler
+description: Kubernetes controller that autoscales Azure Premium SSD v2 disk IOPS and throughput based on utilization
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - autoscaler
+  - azure
+  - disk
+  - iops
+  - kubernetes
+sources:
+  - https://github.com/padoa/vertical-disk-autoscaler

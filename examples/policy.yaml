@@ -1,9 +1,9 @@
+# Select all PVCs using a StorageClass.
 apiVersion: disk.autoscaler.io/v1alpha1
 kind: DiskAutoscalePolicy
 metadata:
-  name: default-policy
+  name: storageclass-policy
 spec:
-  # Match all PVCs using this StorageClass
   storageClassName: managed-premium-v2
 
   scaleUp:
@@ -34,3 +34,36 @@ spec:
 
   rateLimit:
     maxScalesPerHour: 6
+---
+# Select specific PVCs by label.
+apiVersion: disk.autoscaler.io/v1alpha1
+kind: DiskAutoscalePolicy
+metadata:
+  name: database-policy
+spec:
+  pvcSelector:
+    matchLabels:
+      app: postgresql
+      disk-autoscaler: enabled
+
+  scaleUp:
+    enabled: true
+    targetIOPSUtilizationPercent: 70
+    targetThroughputUtilizationPercent: 70
+    stepIOPS: 10000
+    stepThroughputMBps: 200
+    cooldown: 1m
+
+  scaleDown:
+    enabled: true
+    targetIOPSUtilizationPercent: 20
+    targetThroughputUtilizationPercent: 20
+    stepIOPS: 3000
+    stepThroughputMBps: 100
+    cooldown: 15m
+
+  constraints:
+    minIOPS: 3000
+    maxIOPS: 80000
+    minThroughputMBps: 125
+    maxThroughputMBps: 1200

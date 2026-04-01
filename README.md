@@ -31,14 +31,19 @@ helm install disk-autoscaler \
   --set serviceAccount.annotations."azure\.workload\.identity/client-id"="<your-client-id>"
 ```
 
-### Create a policy
+### Example policies
+
+A policy selects PVCs either by StorageClass name, by label selector, or both. If both are set, a PVC matching either condition is managed.
+
+**Select all PVCs using a StorageClass:**
 
 ```yaml
 apiVersion: disk.autoscaler.io/v1alpha1
 kind: DiskAutoscalePolicy
 metadata:
-  name: default-policy
+  name: storageclass-policy
 spec:
+  # Every PVC backed by this StorageClass is managed.
   storageClassName: managed-premium-v2
 
   scaleUp:
@@ -70,6 +75,52 @@ spec:
   rateLimit:
     maxScalesPerHour: 6
 ```
+
+**Select specific PVCs by label:**
+
+```yaml
+apiVersion: disk.autoscaler.io/v1alpha1
+kind: DiskAutoscalePolicy
+metadata:
+  name: database-policy
+spec:
+  # Only PVCs with these labels are managed.
+  pvcSelector:
+    matchLabels:
+      app: postgresql
+      disk-autoscaler: enabled
+
+  scaleUp:
+    enabled: true
+    targetIOPSUtilizationPercent: 70
+    targetThroughputUtilizationPercent: 70
+    stepIOPS: 10000
+    stepThroughputMBps: 200
+    cooldown: 1m
+
+  scaleDown:
+    enabled: true
+    targetIOPSUtilizationPercent: 20
+    targetThroughputUtilizationPercent: 20
+    stepIOPS: 3000
+    stepThroughputMBps: 100
+    cooldown: 15m
+
+  constraints:
+    minIOPS: 3000
+    maxIOPS: 80000
+    minThroughputMBps: 125
+    maxThroughputMBps: 1200
+```
+
+### Check status
+
+```bash
+kubectl get diskautoscalepolicies
+kubectl describe diskautoscalepolicy database-policy
+```
+
+The `status.disks` array shows per-disk state: current IOPS/throughput, utilization, phase, and last scale timestamps.
 
 ## Configuration
 

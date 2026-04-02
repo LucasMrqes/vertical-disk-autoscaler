@@ -1,6 +1,6 @@
 # Vertical Disk Autoscaler
 
-A Kubernetes controller that automatically adjusts IOPS and throughput on Azure Premium SSD v2 managed disks based on observed utilization. Scale up under load, scale down when idle -- pay only for what you use.
+A Kubernetes controller that automatically adjusts IOPS and throughput on Azure Premium SSD v2 managed disks based on observed utilization. Scale up under load, scale down when idle.
 
 ## How it works
 
@@ -8,10 +8,6 @@ A Kubernetes controller that automatically adjusts IOPS and throughput on Azure 
 2. The controller watches matching PVCs, resolves them to Azure managed disks via the PV's CSI volume handle
 3. A periodic loop fetches disk utilization from Azure Monitor, evaluates scaling decisions, and applies changes via the Azure Compute API
 4. Disks scale up when utilization exceeds the target, and scale down when both IOPS and throughput are below the downscale target
-
-## Use case
-
-Restoring PostgreSQL databases from pgBackRest backups on AKS. Create the PVC with high IOPS/throughput for fast restore, then let the autoscaler downscale once the database is idle.
 
 ## Quick start
 
